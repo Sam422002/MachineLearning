@@ -1,0 +1,66 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.animation import FuncAnimation
+from sklearn.datasets import make_regression
+from IPython.display import HTML
+
+
+X, y = make_regression(n_samples=100, n_features=1, noise=20, random_state=42)
+X = X.ravel()
+
+
+class gdalg:
+    def __init__(self, epoch, learningRate):
+        self.m = 100  
+        self.b = -120  
+        self.epoch = epoch
+        self.lr = learningRate
+        self.history = []
+
+    def fit(self, X, y):
+        n = len(X)
+        for _ in range(self.epoch):
+            y_pred = self.m * X + self.b
+            error = y - y_pred
+            dm = (-2 / n) * np.sum(error * X)
+            db = (-2 / n) * np.sum(error)
+            self.m -= self.lr * dm
+            self.b -= self.lr * db
+            self.history.append((self.m, self.b))  
+
+    def predict(self, X):
+        return self.m * X + self.b
+
+
+gd = gdalg(1000, 0.001)
+gd.fit(X, y)
+
+
+fig, ax = plt.subplots()
+ax.scatter(X, y, color='blue', label='points')
+line, = ax.plot([], [], 'r-', linewidth=2, label='line')
+ax.set_xlim(X.min(), X.max())
+ax.set_ylim(y.min() - 30, y.max() + 30)
+ax.set_xlabel("X")
+ax.set_ylabel("y")
+ax.legend()
+
+
+def update(epoch):
+    m, b = gd.history[epoch]
+    X_line = np.linspace(X.min(), X.max(), 100)
+    y_line = m * X_line + b
+    line.set_data(X_line, y_line)
+    ax.set_title(f"Epoch {epoch + 1} | m={m:.2f}, b={b:.2f}")
+    return line,
+
+
+ani = FuncAnimation(fig, update, frames=len(gd.history), interval=50, blit=False)
+
+
+plt.show()
+
+
+HTML(ani.to_jshtml())
+
+
