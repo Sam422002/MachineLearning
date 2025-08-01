@@ -1,0 +1,30 @@
+
+
+X,y = make_regression(n_samples = 100 , n_informative=1 , n_targets = 1 ,n_features=1, noise = 20)
+model = LinearRegression()
+model.fit(X,y)
+print(model.coef_)
+print(model.intercept_)
+
+from sklearn.model_selection import cross_val_score
+np.mean(cross_val_score(model , X,y , scoring = 'r2'))
+
+class GDalgo:
+  def __init__(self, epochs , learningRate):
+    self.m = 100
+    self.b = -120
+    self.epochs = epochs
+    self.lr=learningRate
+  def fit(self , X,y):
+    for _ in range(self.epochs):
+        loss_slope_b = -2 * np.sum(y - self.m * X.ravel()-self.b)
+        loss_slope_m =  -2*np.sum((y - self.m*X.ravel() - self.b)* X.ravel())
+        self.b = self.b - (self.lr*loss_slope_b)
+        self.m = self.m - (self.lr*loss_slope_m)
+    print(self.b , self.m)
+
+
+
+gd =GDalgo(1000 , 0.001)
+
+gd.fit(X,y)
