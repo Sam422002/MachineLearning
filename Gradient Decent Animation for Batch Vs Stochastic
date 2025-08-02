@@ -1,0 +1,147 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.animation import FuncAnimation
+from sklearn.datasets import make_regression
+from IPython.display import HTML
+
+# Make 2D regression data
+X, y = make_regression(n_samples=100, n_features=1, noise=20, random_state=42)
+X = X.ravel()
+
+### -------- BATCH GRADIENT DESCENT -------- ###
+class BatchGDLinearRegression:
+    def __init__(self, epochs, lr):
+        self.epochs = epochs
+        self.lr = lr
+        self.m = 0
+        self.b = 0
+        self.history = []
+        self.loss_history = []
+
+    def fit(self, X, y):
+        n = len(X)
+        for _ in range(self.epochs):
+            y_pred = self.m * X + self.b
+            error = y - y_pred
+            loss = np.mean(error ** 2)
+            self.loss_history.append(loss)
+
+            dm = (-2 / n) * np.sum(error * X)
+            db = (-2 / n) * np.sum(error)
+
+            self.m -= self.lr * dm
+            self.b -= self.lr * db
+            self.history.append((self.m, self.b))
+
+    def predict(self, X):
+        return self.m * X + self.b
+
+### -------- STOCHASTIC GRADIENT DESCENT -------- ###
+class StochasticGDLinearRegression:
+    def __init__(self, epochs, lr):
+        self.epochs = epochs
+        self.lr = lr
+        self.m = 0
+        self.b = 0
+        self.history = []
+        self.loss_history = []
+
+    def fit(self, X, y):
+        n = len(X)
+        for _ in range(self.epochs):
+            loss_epoch = 0
+            for _ in range(n):
+                idx = np.random.randint(0, n)
+                x_i = X[idx]
+                y_i = y[idx]
+
+                y_pred = self.m * x_i + self.b
+                error = y_i - y_pred
+
+                dm = -2 * error * x_i
+                db = -2 * error
+
+                self.m -= self.lr * dm
+                self.b -= self.lr * db
+
+                loss_epoch += error ** 2
+
+            avg_loss = loss_epoch / n
+            self.loss_history.append(avg_loss)
+            self.history.append((self.m, self.b))
+
+    def predict(self, X):
+        return self.m * X + self.b
+
+# Train models
+bgd = BatchGDLinearRegression(epochs=100, lr=0.01)
+bgd.fit(X, y)
+
+sgd = StochasticGDLinearRegression(epochs=100, lr=0.01)
+sgd.fit(X, y)
+
+fig, axs = plt.subplots(2, 2, figsize=(10, 8), constrained_layout=True)  # ✅ Fix size + auto-fit
+
+# Titles
+axs[0, 0].set_title("Batch GD: Line Fit", fontsize=10)
+axs[0, 1].set_title("Batch GD: Loss Curve", fontsize=10)
+axs[1, 0].set_title("Stochastic GD: Line Fit", fontsize=10)
+axs[1, 1].set_title("Stochastic GD: Loss Curve", fontsize=10)
+
+# Scatter + axes config
+for ax in [axs[0, 0], axs[1, 0]]:
+    ax.scatter(X, y, color='blue', s=15)
+    ax.set_xlim(X.min(), X.max())
+    ax.set_ylim(y.min() - 30, y.max() + 30)
+    ax.set_xlabel("X", fontsize=8)
+    ax.set_ylabel("y", fontsize=8)
+
+for ax in [axs[0, 1], axs[1, 1]]:
+    ax.set_xlim(0, 100)
+    ax.set_ylim(0, max(max(bgd.loss_history), max(sgd.loss_history)) + 100)
+    ax.set_xlabel("Epoch", fontsize=8)
+    ax.set_ylabel("MSE", fontsize=8)
+
+# Adjust tick label font sizes
+for row in axs:
+    for ax in row:
+        ax.tick_params(axis='both', labelsize=7)
+
+# Lines
+line_bgd, = axs[0, 0].plot([], [], 'r-', lw=2)
+line_sgd, = axs[1, 0].plot([], [], 'r-', lw=2)
+loss_bgd_line, = axs[0, 1].plot([], [], 'g-', lw=2)
+loss_sgd_line, = axs[1, 1].plot([], [], 'g-', lw=2)
+
+
+# Update function
+def update(epoch):
+    # BGD line
+    m_bgd, b_bgd = bgd.history[epoch]
+    x_line = np.linspace(X.min(), X.max(), 100)
+    y_line_bgd = m_bgd * x_line + b_bgd
+    line_bgd.set_data(x_line, y_line_bgd)
+
+    # SGD line
+    m_sgd, b_sgd = sgd.history[epoch]
+    y_line_sgd = m_sgd * x_line + b_sgd
+    line_sgd.set_data(x_line, y_line_sgd)
+
+    # Loss curves
+    loss_bgd_line.set_data(range(epoch + 1), bgd.loss_history[:epoch + 1])
+    loss_sgd_line.set_data(range(epoch + 1), sgd.loss_history[:epoch + 1])
+
+    return line_bgd, line_sgd, loss_bgd_line, loss_sgd_line
+
+ani = FuncAnimation(
+    fig,
+    update,
+    frames=min(len(bgd.history), len(sgd.history)),  # = min(100, 50)
+    interval=100,
+    blit=True
+)
+
+plt.tight_layout()
+plt.close()
+HTML(ani.to_jshtml())
+
