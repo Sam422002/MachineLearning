@@ -1,0 +1,22 @@
+# Train model
+gd = GradientDecentNdim(epochs=100, learningRate=0.1)
+gd.fit(X_train, y_train)
+
+# Plot animation
+fig, ax = plt.subplots()
+line, = ax.plot([], [], lw=2)
+ax.set_xlim(0, len(gd.loss_history))
+ax.set_ylim(0, max(gd.loss_history) + 1000)
+ax.set_xlabel("Epoch")
+ax.set_ylabel("MSE Loss")
+ax.set_title("Gradient Descent Loss Curve")
+
+def update(epoch):
+    x = list(range(epoch + 1))
+    y = gd.loss_history[:epoch + 1]
+    line.set_data(x, y)
+    return line,
+
+ani = FuncAnimation(fig, update, frames=len(gd.loss_history), interval=80, blit=False)
+plt.close()
+HTML(ani.to_jshtml())
