@@ -1,0 +1,25 @@
+import random
+import numpy as np
+class StocasticGradientDecentls:
+  def __init__(self, epochs , LearningRate, DecayRate):
+    self.epochs = epochs
+    self.lr = LearningRate
+    self.coef_ = None
+    self.intercept_ = None
+    self.dr = DecayRate
+  
+  def fit(self , X_train , y_tarin):
+    self.intercept_ = 0
+    self.coef_  = np.ones(X_train.shape[1])
+    for i in range(self.epochs):
+      current_lr = self.lr / (1 +self.dr * i )
+      for j in range(X_train.shape[0]):
+        idk = np.random.randint(0 , X_train.shape[0])
+        y_hagt = np.dot(X_train[idk] , self.coef_) + self.intercept_
+        intercept_def = - 2 * np.sum(y_train[idk] - y_hagt)
+        self.intercept_ = self.intercept_ - (current_lr *intercept_def)
+        coef_def = -2 * np.dot((y_train[idk] - y_hagt), X_train[idk])
+        self.coef_ = self.coef_ - (current_lr * coef_def)
+    print(self.intercept_ , self.coef_)
+  def predict(self , X_test):
+    return np.dot(X_test , self.coef_) + self.intercept_
