@@ -1,0 +1,26 @@
+class MBGradientDecent:
+  def __init__(self , epochs , LearningRate , BatchSize ):
+    self.epochs = epochs
+    self.lr = LearningRate
+    self.bs = BatchSize
+    self.coef_ = None
+    self.intercept_ = None
+
+  def fit(self , X_train , y_train):
+    self.intercept_ = 0
+    self.coef_ = np.ones(X_train.shape[1])
+    for i in range(self.epochs):
+      for j in range(int(X_train.shape[0]/ self.bs)):
+        idx = random.sample(range(X_train.shape[0]) , self.bs)
+
+        y_hat = np.dot(X_train[idx] , self.coef_)+self.intercept_
+        intercept_def_ = -2 * np.mean(y_train[idx] - y_hat)
+        self.intercept_ = self.intercept_ - self.lr * intercept_def_
+
+        coef_def_ = -2 * np.dot((y_train[idx] - y_hat) , X_train[idx])
+        self.coef_ = self.coef_ - self.lr * coef_def_ 
+    print(self.intercept_ , self.coef_)
+
+  def predict(self , X_test):
+      return np.dot(X_test , self.coef_) + self.intercept_
+
