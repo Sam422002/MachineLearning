@@ -1,0 +1,95 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.animation import FuncAnimation
+from sklearn.datasets import make_regression
+from IPython.display import HTML
+
+# Generate 2D regression data
+X, y = make_regression(n_samples=100, n_features=1, noise=20, random_state=42)
+X = X.ravel()
+
+# Stochastic Gradient Descent with Learning Schedule and Animation Support
+class StochasticGradientDescentLS:
+    def __init__(self, epochs, learning_rate, decay_rate):
+        self.epochs = epochs
+        self.lr = learning_rate
+        self.dr = decay_rate
+        self.coef_ = None
+        self.intercept_ = None
+        self.history = []         # To store (m, b)
+        self.loss_history = []    # To store loss
+
+    def fit(self, X_train, y_train):
+        self.intercept_ = 0
+        self.coef_ = np.ones(1)  # Only 1 feature
+        n = len(X_train)
+
+        for epoch in range(self.epochs):
+            current_lr = self.lr / (1 + self.dr * epoch)
+            epoch_loss = 0
+
+            for _ in range(n):
+                idx = np.random.randint(0, n)
+                x_i = X_train[idx]
+                y_i = y_train[idx]
+
+                y_hat = self.coef_[0] * x_i + self.intercept_
+                error = y_i - y_hat
+
+                # Gradients
+                coef_grad = -2 * error * x_i
+                intercept_grad = -2 * error
+
+                # Update parameters
+                self.coef_[0] -= current_lr * coef_grad
+                self.intercept_ -= current_lr * intercept_grad
+
+                epoch_loss += error ** 2
+
+            # Record for animation
+            self.history.append((self.coef_[0], self.intercept_))
+            self.loss_history.append(epoch_loss / n)
+
+    def predict(self, X):
+        return self.coef_[0] * X + self.intercept_
+
+# Train the model
+sgd = StochasticGradientDescentLS(epochs=50, learning_rate=0.01, decay_rate=0.5)
+sgd.fit(X, y)
+
+# Create the animation
+fig, axs = plt.subplots(1, 2, figsize=(12, 5), constrained_layout=True)
+
+# Left: line fit
+axs[0].scatter(X, y, color='blue', s=15, label='Data')
+line, = axs[0].plot([], [], 'r-', lw=2, label='SGD Line')
+axs[0].set_xlim(X.min(), X.max())
+axs[0].set_ylim(y.min() - 30, y.max() + 30)
+axs[0].set_title("Stochastic GD with Learning Schedule")
+axs[0].legend()
+
+# Right: loss curve
+loss_line, = axs[1].plot([], [], 'g-', lw=2)
+axs[1].set_xlim(0, len(sgd.loss_history))
+axs[1].set_ylim(0, max(sgd.loss_history) + 100)
+axs[1].set_title("Loss Curve")
+axs[1].set_xlabel("Epoch")
+axs[1].set_ylabel("MSE")
+
+# Animation update function
+def update(epoch):
+    m, b = sgd.history[epoch]
+    x_line = np.linspace(X.min(), X.max(), 100)
+    y_line = m * x_line + b
+    line.set_data(x_line, y_line)
+
+    loss_line.set_data(range(epoch + 1), sgd.loss_history[:epoch + 1])
+
+    axs[0].set_title(f"Epoch {epoch + 1} | m={m:.2f}, b={b:.2f}")
+    return line, loss_line
+
+ani = FuncAnimation(fig, update, frames=len(sgd.history), interval=200, blit=True)
+plt.close()
+
+# Display animation
+HTML(ani.to_jshtml())
