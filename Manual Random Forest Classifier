@@ -1,0 +1,133 @@
+from sklearn.linear_model import SGDClassifier
+
+sg = SGDClassifier(penalty = 'l2' , max_iter= 1000 , eta0 = 0.1 , learning_rate= 'constant', alpha = 0.0001)
+
+sg.fit(X_train , y_train)
+y_pred = sg.predict(X_test)
+print("The R2 score", r2_score(y_test , y_pred))
+
+
+
+# Manually building Random Forest
+
+import numpy as np
+import pandas as pd
+from sklearn.datasets import make_classification
+
+X, y = make_classification(
+    n_features=5,          # Total number of features (columns) in X
+    n_redundant=0,         # No redundant features (features that are linear combinations of informative ones)
+    n_informative=5,       # All 5 features are informative (i.e., they contribute to the class label)
+    n_clusters_per_class=1 # Each class is centered around 1 cluster (makes classification easier)
+)
+
+
+df = pd.DataFrame(X , columns =['col1' , 'col2', 'col3',' col4', 'col5']  )
+df['target'] = y 
+df.shape
+
+def select_row(df , percentage):
+  return df.sample(int(percentage * df.shape[0]) , replace = True)
+
+import random
+def select_features(df , percentage):
+  # Include the target column in the list of columns to sample from
+  cols_to_sample = df.columns.tolist()
+  num_cols_to_select = int(percentage * (len(cols_to_sample) - 1)) # Exclude target from random selection count
+  selected_cols = random.sample(cols_to_sample[:-1], num_cols_to_select)
+  selected_cols.append('target') # Always include the target column
+  return df[selected_cols]
+
+def select_combine(df , row_percent , column_percent ):
+  new_df = select_row(df ,row_percent )
+  return select_features(new_df, column_percent)
+
+df1 = select_row(df , 0.2)
+df2 = select_features(df , 0.2)
+df3 = select_combine(df , 0.2 , 0.2)
+
+df3.shape
+
+df1 = select_row(df , 0.2)
+df11 = select_row(df , 0.2)
+df12 = select_row(df , 0.2
+
+from sklearn.tree import DecisionTreeClassifier
+
+dc1 = DecisionTreeClassifier()
+dc11 = DecisionTreeClassifier()
+dc12 = DecisionTreeClassifier()
+dc1.fit(df1.iloc[ : ,0:5] , df1.iloc[: , -1])
+dc11.fit(df11.iloc[ : ,0:5] , df11.iloc[: , -1])
+dc12.fit(df12.iloc[ : ,0:5] , df12.iloc[: , -1])
+
+from sklearn.tree import plot_tree
+
+plot_tree(dc1)
+
+plot_tree(dc11)
+
+plot_tree(dc12)
+
+dc1.predict(np.array([-0.120872 ,           -0.933215 ,          0.412221        ,         0.031689 ,    2.139482]).reshape(1,5))
+
+dc11.predict(np.array([-0.120872 ,           -0.933215 ,          0.412221        ,         0.031689 ,    2.139482]).reshape(1,5))
+
+dc12.predict(np.array([-0.120872 ,           -0.933215 ,          0.412221        ,         0.031689 ,    2.139482]).reshape(1,5))
+
+df.loc[0 , ]
+
+# Column Based sampling
+
+df2= select_features(df , 0.8)
+df21 = select_features(df , 0.8)
+df22 = select_features(df , 0.8)
+
+dc2 = DecisionTreeClassifier()
+dc21 = DecisionTreeClassifier()
+dc22 = DecisionTreeClassifier()
+
+# Convert the target column to integer type
+df2['target'] = df2['target'].astype(int)
+df21['target'] = df21['target'].astype(int)
+df22['target'] = df22['target'].astype(int)
+
+
+dc2.fit(df2.iloc[ : ,0:4] , df2.iloc[: , -1])
+dc21.fit(df21.iloc[ : ,0:4] , df21.iloc[: , -1])
+dc22.fit(df22.iloc[ : ,0:4] , df22.iloc[: , -1])
+
+plot_tree(dc2)
+
+plot_tree(dc21)
+
+plot_tree(dc22)
+
+df2
+
+dc2.predict(np.array([0.412221 ,	0.031689	, -0.120872	, 2.139482]).reshape(1,4))
+
+dc21.predict(np.array([0.412221 ,	0.031689	, -0.120872	, 2.139482]).reshape(1,4))
+
+dc22.predict(np.array([0.412221 ,	0.031689	, -0.120872	, 2.139482]).reshape(1,4))
+
+df3 = select_combine(df , 0.4 , 0.4)
+df31 =select_combine(df , 0.4 , 0.4)
+df32 = select_combine(df , 0.4 , 0.4)
+
+df3.shape
+
+dc3 = DecisionTreeClassifier()
+dc31 = DecisionTreeClassifier()
+dc32 = DecisionTreeClassifier()
+dc3.fit(df3.iloc[ : ,0:2] , df3.iloc[: , -1])
+dc31.fit(df3.iloc[ : ,0:2] , df3.iloc[: , -1])
+dc32.fit(df3.iloc[ : ,0:2] , df3.iloc[: , -1])
+
+df3
+
+dc3.predict(np.array([0.412221	 , -0.933215	]).reshape(1 ,  2))
+
+dc31.predict(np.array([0.412221	 , -0.933215	]).reshape(1 ,  2))
+
+dc32.predict(np.array([0.412221	 , -0.933215	]).reshape(1 ,  2))
